@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:par_impar/tela_principal.dart';
-import 'package:http/http.dart' as http;
 
 // POST - https://par-impar.glitch.me/novo
 // BODY - {'username' : 'edson'}

@@ -7,24 +7,42 @@ import 'package:par_impar/lista.dart';
 import 'package:par_impar/resultado.dart';
 import 'package:http/http.dart' as http;
 
-Function testeFun = () async {
-  var itens = await http
-      .get(Uri.https('par-impar.glitch.me', '/jogadores'))
-      .then((value) => {print(jsonDecode(value.body)['jogadores'])});
-  return itens;
-};
-
 class TelaPrincipal extends StatefulWidget {
   @override
   State<StatefulWidget> createState() => _TelaPrincipalState();
 }
 
 class _TelaPrincipalState extends State<TelaPrincipal> {
-  var itens = [
-    {'username': 'edson', 'valor': 100},
-    {'username': 'joao', 'valor': 300}
-  ];
-  var itens_2 = testeFun();
+  var itens = [];
+
+  testeFun(itens) async {
+    await http
+        .get(Uri.https('par-impar.glitch.me', '/jogadores'))
+        .then((value) => {
+              itens.clear(),
+              jsonDecode(value.body)['jogadores'].forEach((element) {
+                itens.add({
+                  'username': element['username'].toString(),
+                  'valor': int.parse(element['pontos'].toString())
+                });
+              })
+            });
+    print(itens);
+  }
+
+  apostaFunc(aposta, numero, parImpar) async {
+    await http.post(Uri.https('par-impar.glitch.me', '/aposta'),
+        headers: <String, String>{
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: json.encode({
+          'username': username,
+          'valor': aposta,
+          'numero': numero,
+          'parimpar': parImpar
+        }));
+  }
 
   var exibirTela = 1;
   var aposta;
@@ -32,19 +50,37 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
   var cadastro;
   var resultado = Resultado();
   var username;
+  var valor;
+  var parImpar;
+  var numero;
   var data;
   var body;
 
   @override
   void initState() {
     exibirTela = 1;
+
+    setState(() {
+      testeFun(itens);
+    });
+
     lista = Lista(
-      callback: () {},
+      callback: () {
+        setState(() {
+          testeFun(itens);
+        });
+      },
       itens: itens,
     );
-    aposta = Aposta(callback: (aposta, numero, par_impar) {
+
+    aposta = Aposta(callback: (aposta, numero, parImpar) {
       setState(() {
-        // itens.add({'username': username, 'valor': aposta});
+        testeFun(itens);
+        apostaFunc(aposta, numero, parImpar);
+        this.aposta = aposta;
+        this.numero = numero;
+        this.parImpar = parImpar;
+        exibirTela = 3;
       });
     });
 
@@ -59,6 +95,7 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
           },
           body: body);
       setState(() {
+        itens.add({'username': username, 'valor': 1000});
         this.username = username;
         aposta.username = username;
         exibirTela = 2;
